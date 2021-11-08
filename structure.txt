@@ -1,0 +1,22 @@
+strategies for finding the blocks:
+
+turn 360 -> find the closest block that's motionless -> go pick it up -> return to the orignal point -> turn 360
+
+
+functions for the minibot:
+
+path remembering: mark the location of the block and memorizing the path 
+
+pick-drop: pick up the block using the claw & drop the block onece detected blue tape
+
+movement: turn around & move forward backwoard & brake 
+
+ultrasound: detect closest block which is motionless
+
+crash avoidance: as long as it detects sth moves, brake
+
+use of tapes:
+
+blue: points to drop the block
+
+black: ?
