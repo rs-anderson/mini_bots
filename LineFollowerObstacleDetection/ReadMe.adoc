@@ -1,0 +1,76 @@
+:project: Line Follower Robot with Obstacle Detection
+:author: Fernando Santos
+:email: f.o.santos97@gmail.com
+:lastUpdated: 22/06/2018
+:version: 1.0
+:license: MIT
+
+= Project: {project}
+
+Assemble a black line follower robot that is capable of stopping in front of an 
+obstacle or reaching the end of the route (symbolized by when both line sensors 
+detect a black line). The vehicle can listen to a command received by the serial 
+to start or stop the route, and these commands are, respectively, the characters 
+'d' and 's'.
+
+== Step 1: Installation
+
+1. Open the main Arduino file;
+2. Edit the following variables according to your needs:
+* Max distance and the offset of your ultrasonic sensor;
+* Speed of the motors;
+* Sensivity of the IR module.
+
+== Step 2: Assemble the circuit
+
+Assemble the circuit following the Circuit.png attached to the sketch. +
+There are two connections that are not represented in the circuit image. 
+These connections refer to the PWM jumpers that are connected to the 
+L298N H bridge. So to use this code, you need to disconnect the jumpers 
+and connect them to the Arduino ports listed in the main file.
+
+== Step 3: Load the code
+
+Upload the code contained in this sketch on to your board
+
+=== Folder structure
+
+[subs="attributes"]
+....
+ LineFollowerObstacleDetection            => Arduino sketch folder
+  ├── LineFollowerObstacleDetection.ino   => main Arduino file
+  ├── Circuit.png                         => Circuit
+  ├── MountedVehicle.png                  => Vehicle mounted at the end of the project
+  ├── LICENSE.txt                         => {license} License
+  └── ReadMe.adoc                         => This file
+....
+
+=== License
+
+This project is released under a {license} License.
+
+=== Contributing
+
+To contribute to this project please contact {author} <{email}>
+
+=== Bill of Materials
+
+[options="header", cols="^,^"]
+|===
+| Components                  | Quantity
+| Arduino Uno                 | 1
+| Arduino USB cable           | 1
+| 9 V battery                 | 1
+| 9 V battery connector       | 1
+| 2WD robot chassis           | 1
+| L298N H bridge              | 1
+| 7.4 V 2200 mAh LiPo battery | 1
+| HC-SR04 ultrasonic sensor   | 1
+| TCRT5000 IR sensor module   | 1
+| Jumpers                     | Some
+|===
+
+''''
+
+Version: {version} +
+Last updated: {lastUpdated}
