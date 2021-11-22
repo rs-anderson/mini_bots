@@ -1,0 +1,24 @@
+<Digital pins>
+Motors:
+AIN1 3
+AIN2 4
+PWMA 5
+BIN1 7
+BIN2 8
+PWMB 6
+
+Servo:
+Servo 12
+
+Ultrasonic:
+Trigger 10
+Echo 11
+
+<Analog pins>
+Infra Red:
+Right A1
+Left A0
+
+RGB:
+SDA A4
+SCL A5
