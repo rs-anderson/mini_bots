@@ -84,20 +84,21 @@ void setup()
 
 void loop()
 {
-    // if (Serial.available() > 0)
-    // {
-    //     char serial = Serial.read();
+    // haven't set the distance we need to drive, but we'll go straight for the block in middle
+    if (Serial.available() > 0)
+    {
+        char serial = Serial.read();
 
-    //     if (serial == GREEN_SIGN || serial == RED_SIGN)
-    //     {
-    //         vehicleAction = serial;
-    //     }
-    // }
+        if (serial == GREEN_SIGN || serial == RED_SIGN)
+        {
+            vehicleAction = serial;
+        }
+    }
 
-    // if (vehicleAction == GREEN_SIGN)
-    //     drive();
-    // else if (vehicleAction == RED_SIGN)
-    //     brake(motor1, motor2);
+    if (vehicleAction == GREEN_SIGN)
+        drive();
+    else if (vehicleAction == RED_SIGN)
+        brake(motor1, motor2);
 
     uint16_t r, g, b, c, colorTemp, lux;
 
@@ -124,6 +125,7 @@ void loop()
     // Serial.print(c, DEC);
     // Serial.print(" ");
     // Serial.println(" ");
+    // if detecting black, then close the claw
     if (r == 0 & g == 0 & b == 0)
     {
         clawAngle = move(servoClaw, clawAngle, 90);
