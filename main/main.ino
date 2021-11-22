@@ -268,10 +268,10 @@ void driveAlongLine(int speed, int adjustmentSpeed){
 
   int lineState = lineDetector.getState();
 
-  forward(motor1, motor2, speed)
+  forward(motor1, motor2, speed);
 
-  if (lineState == 0) left(motor1, motor2, adjustmentSpeed));
-  else if (lineState == 1) right(motor1, motor2, adjustmentSpeed));
+  if (lineState == 0) left(motor1, motor2, adjustmentSpeed);
+  else if (lineState == 1) right(motor1, motor2, adjustmentSpeed);
 
 }
 
@@ -281,9 +281,9 @@ void navigateAroundBlock(){
 
 
 bool isObstacle(){
-  distance = getMedianDistance();
+  double distance = getMedianDistance();
   if (distance < 15) return true;
-  return false
+  return false;
 }
 
 
