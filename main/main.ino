@@ -242,7 +242,7 @@ void approachBlock(double originalDistance){
   Serial.println("Approaching block...");
   while (distance > distForGrippers){
     forward(motor1, motor2, speed);
-    
+
     distance = getMedianDistance();
     Serial.println("Distance to block...");
     Serial.println(distance);
@@ -321,6 +321,7 @@ void loop(){
           break;
 
       case getHomeOnLine:
+          // Note: can use loop instead of sequential approach
           Serial.println("Going home along line...");
 
           orientateOnLine();  // align robot on the line
