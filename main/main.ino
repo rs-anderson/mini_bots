@@ -118,7 +118,7 @@ int echoPin = 7;
 UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin);
 
 long time;
-long diff;
+long timeElapsed;
 double distanceToBlock;
 
 
@@ -132,7 +132,7 @@ unsigned char robotState = getMiddleBlock;
 ///////////////////////
 
 
-void swap(double *p, double *q) {
+void _swap(double *p, double *q) {
    int t;
    
    t=*p; 
@@ -140,13 +140,14 @@ void swap(double *p, double *q) {
    *q=t;
 }
 
-void sort(double a[], int n) { 
+
+void _sort(double a[], int n) { 
    int i, j;
  
    for(i=0;i<n-1;i++) {
       for(j=0;j<n-i-1;j++) {
          if(a[j]>a[j+1])
-            swap(&a[j],&a[j+1]);
+            _swap(&a[j],&a[j+1]);
       }
    }
 }
@@ -161,7 +162,7 @@ double getMedianDistance(){
   double distance_3 = distanceSensor.measureDistanceCm();
   double distances[] = {distance_1, distance_2, distance_3};
 
-  sort(distances, n);
+  _sort(distances, n);
   n = (n+1) / 2 - 1;
 
   double median_distance = distances[n];
@@ -172,11 +173,11 @@ void driveToLocation(long duration, int speed){
 
     Serial.println("Driving to location...");
     time = millis();
-    diff = 0;
+    timeElapsed = 0;
 
-    while (diff < duration){
+    while (timeElapsed < duration){
       forward(motor1, motor2, speed);
-      diff = millis() - time;
+      timeElapsed = millis() - time;
     }
 
     brake(motor1, motor2);
@@ -184,14 +185,14 @@ void driveToLocation(long duration, int speed){
 }
 
 
-double scanForBlockInDirection(long duration, int direction){
+double _scanForBlockInDirection(long duration, int direction){
     // direction == 1 -> left; direction == -1 -> right
 
     double distance;
     time = millis();
-    diff = 0;
+    timeElapsed = 0;
 
-    while (diff < duration){
+    while (timeElapsed < duration){
         left(motor1, motor2, direction*200);
         distance = getMedianDistance();
 
@@ -202,7 +203,7 @@ double scanForBlockInDirection(long duration, int direction){
           return distance;
         }
 
-        diff = millis() - time;
+        timeElapsed = millis() - time;
 
     }
     return -1;
@@ -214,14 +215,14 @@ double scanForBlock(long duration){
     double distance;
 
     Serial.println("Scanning in left direction...");
-    distance = scanForBlockInDirection(duration, 1); // scanning left
+    distance = _scanForBlockInDirection(duration, 1); // scanning left
 
     if (!distance == -1){
       return distance; // found block on left rotation
     }
 
     Serial.println("No block found on left rotation. Scanning in right direction...");
-    distance = scanForBlockInDirection(duration*2, -1);
+    distance = _scanForBlockInDirection(duration*2, -1);
 
     if (!distance == -1){
       return distance;  // found block on right rotation
@@ -241,6 +242,7 @@ void approachBlock(double originalDistance){
   Serial.println("Approaching block...");
   while (distance > distForGrippers){
     forward(motor1, motor2, speed);
+    
     distance = getMedianDistance();
     Serial.println("Distance to block...");
     Serial.println(distance);
