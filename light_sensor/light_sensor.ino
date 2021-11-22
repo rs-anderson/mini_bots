@@ -42,6 +42,7 @@ void loop(void)
 
     Serial.print("Color Temp: ");
     Serial.print(colorTemp, DEC);
+    delay(1000);
     Serial.print(" K - ");
     Serial.print("Lux: ");
     Serial.print(lux, DEC);
