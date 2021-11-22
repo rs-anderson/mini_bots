@@ -56,7 +56,7 @@ Servo servoClaw; // servo motor to open/close the claw
 
 int leftThreshold;
 int rightThreshold;
-int clawAngle = 150; // servoClaw's angle initialized
+int clawAngle = 45; // servoClaw's angle initialized
 
 void setup()
 {
@@ -84,6 +84,7 @@ void setup()
 
 void loop()
 {
+    // haven't set the distance we need to drive, but we'll go straight for the block in middle
     if (Serial.available() > 0)
     {
         char serial = Serial.read();
@@ -112,27 +113,28 @@ void loop()
     // Serial.print(lux, DEC);
     // Serial.print(" - ");
     Serial.print("R: ");
-    // Serial.print(r, DEC);
+    Serial.print(r, DEC);
     // Serial.print(" ");
     Serial.print("G: ");
-    // Serial.print(g, DEC);
+    Serial.print(g, DEC);
     // Serial.print(" ");
     Serial.print("B: ");
-    // Serial.print(b, DEC);
+    Serial.print(b, DEC);
     // Serial.print(" ");
     // Serial.print("C: ");
     // Serial.print(c, DEC);
     // Serial.print(" ");
     // Serial.println(" ");
+    // if detecting black, then close the claw
     if (r == 0 & g == 0 & b == 0)
     {
-        clawAngle = move(servoClaw, clawAngle, 10);
+        clawAngle = move(servoClaw, clawAngle, 90);
         delay(1000);
     }
 
     // detect the homebase and drop it
-    clawAngle = move(servoClaw, clawAngle, 150);
-    delay(1000);
+    // clawAngle = move(servoClaw, clawAngle, 45);
+    // delay(1000);
 }
 
 void drive()
