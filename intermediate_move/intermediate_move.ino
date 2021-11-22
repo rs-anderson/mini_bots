@@ -56,7 +56,7 @@ Servo servoClaw; // servo motor to open/close the claw
 
 int leftThreshold;
 int rightThreshold;
-int clawAngle = 150; // servoClaw's angle initialized
+int clawAngle = 45; // servoClaw's angle initialized
 
 void setup()
 {
@@ -84,20 +84,20 @@ void setup()
 
 void loop()
 {
-    if (Serial.available() > 0)
-    {
-        char serial = Serial.read();
+    // if (Serial.available() > 0)
+    // {
+    //     char serial = Serial.read();
 
-        if (serial == GREEN_SIGN || serial == RED_SIGN)
-        {
-            vehicleAction = serial;
-        }
-    }
+    //     if (serial == GREEN_SIGN || serial == RED_SIGN)
+    //     {
+    //         vehicleAction = serial;
+    //     }
+    // }
 
-    if (vehicleAction == GREEN_SIGN)
-        drive();
-    else if (vehicleAction == RED_SIGN)
-        brake(motor1, motor2);
+    // if (vehicleAction == GREEN_SIGN)
+    //     drive();
+    // else if (vehicleAction == RED_SIGN)
+    //     brake(motor1, motor2);
 
     uint16_t r, g, b, c, colorTemp, lux;
 
@@ -112,13 +112,13 @@ void loop()
     // Serial.print(lux, DEC);
     // Serial.print(" - ");
     Serial.print("R: ");
-    // Serial.print(r, DEC);
+    Serial.print(r, DEC);
     // Serial.print(" ");
     Serial.print("G: ");
-    // Serial.print(g, DEC);
+    Serial.print(g, DEC);
     // Serial.print(" ");
     Serial.print("B: ");
-    // Serial.print(b, DEC);
+    Serial.print(b, DEC);
     // Serial.print(" ");
     // Serial.print("C: ");
     // Serial.print(c, DEC);
@@ -126,13 +126,13 @@ void loop()
     // Serial.println(" ");
     if (r == 0 & g == 0 & b == 0)
     {
-        clawAngle = move(servoClaw, clawAngle, 10);
+        clawAngle = move(servoClaw, clawAngle, 90);
         delay(1000);
     }
 
     // detect the homebase and drop it
-    clawAngle = move(servoClaw, clawAngle, 150);
-    delay(1000);
+    // clawAngle = move(servoClaw, clawAngle, 45);
+    // delay(1000);
 }
 
 void drive()
