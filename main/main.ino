@@ -113,18 +113,19 @@ byte pin = 5;
 byte initialAngle = 90;
 Gripper gripper(pin, initialAngle);
 
-int triggerPin = 6;
-int echoPin = 7;
+int triggerPin = 10;
+int echoPin = 11;
 UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin);
 
 long time;
 long timeElapsed;
 double distanceToBlock;
+bool inPosition;
 
 
 // the different block-retrieval states we could be in
-enum {getMiddleBlock, getHomeOnLine, getClosestBlock, goToEnemyBase};
-unsigned char robotState = getMiddleBlock; 
+enum {drivingToMiddleBlock, locatingBlock, approachingBlock, gettingHomeOnLine, getClosestBlock, goToEnemyBase};
+unsigned char robotState = drivingToMiddleBlock; 
 
 
 ////////////////////////
@@ -155,12 +156,14 @@ void _sort(double a[], int n) {
 
 double getMedianDistance(){
   // denoising the data by taking median of three measurements
-  int n = 3;
+  int n = 5;
 
   double distance_1 = distanceSensor.measureDistanceCm();
   double distance_2 = distanceSensor.measureDistanceCm();
   double distance_3 = distanceSensor.measureDistanceCm();
-  double distances[] = {distance_1, distance_2, distance_3};
+  double distance_4 = distanceSensor.measureDistanceCm();
+  double distance_5 = distanceSensor.measureDistanceCm();
+  double distances[] = {distance_1, distance_2, distance_3, distance_4, distance_5};
 
   _sort(distances, n);
   n = (n+1) / 2 - 1;
@@ -176,12 +179,13 @@ void driveToLocation(long duration, int speed){
     timeElapsed = 0;
 
     while (timeElapsed < duration){
-      forward(motor1, motor2, speed);
+     forward(motor1, motor2, speed);
       timeElapsed = millis() - time;
     }
 
     brake(motor1, motor2);
     Serial.println("Arrvived at location...");
+    delay(1000);
 }
 
 
@@ -193,19 +197,20 @@ double _scanForBlockInDirection(long duration, int direction){
     timeElapsed = 0;
 
     while (timeElapsed < duration){
-        left(motor1, motor2, direction*200);
+       left(motor1, motor2, direction*200);
         distance = getMedianDistance();
 
         if (distance < 15 && distance > 0){
           brake(motor1, motor2);
           Serial.println("Detected object at distance:");
           Serial.println(distance);
+          delay(1000);
           return distance;
         }
-
         timeElapsed = millis() - time;
 
     }
+    brake(motor1, motor2);
     return -1;
 }
 
@@ -217,43 +222,62 @@ double scanForBlock(long duration){
     Serial.println("Scanning in left direction...");
     distance = _scanForBlockInDirection(duration, 1); // scanning left
 
-    if (!distance == -1){
+    if (distance > -1){
       return distance; // found block on left rotation
     }
 
     Serial.println("No block found on left rotation. Scanning in right direction...");
     distance = _scanForBlockInDirection(duration*2, -1);
 
-    if (!distance == -1){
+    if (distance > -1){
       return distance;  // found block on right rotation
     }
 
-    Serial.println("No block found on right rotation...");
+    Serial.println("No block found on right rotation either...");
     return distance;  // did not find block
 }
 
 
-void approachBlock(double originalDistance){
+bool approachBlock(double originalDistance){
 
   int speed = 50;
-  int distForGrippers = 2;
+  int distForGrippers = 3;
   double distance = originalDistance;
+  int retries = 3;
   
   Serial.println("Approaching block...");
   while (distance > distForGrippers){
+    
     forward(motor1, motor2, speed);
-
     distance = getMedianDistance();
+    
     Serial.println("Distance to block...");
     Serial.println(distance);
+    delay(1000);
 
-    if (distance > originalDistance + 10){
+    if (distance > originalDistance + 10 || distance == -1){
       Serial.println("We've lost the block!!!");
       brake(motor1, motor2);
-      driveToLocation(100, -50);  // backtrack a little
-      distance = scanForBlock(2000); // search for the block again
+      delay(1000);
+      Serial.println("Retrying three times...");
+      for (int i = 0; i < retries; i++){
+        distance = getMedianDistance();
+        if (distance > originalDistance + 10 || distance == -1) continue;
+        else break;
+      }
+      if (distance > originalDistance + 10 || distance == -1){
+        Serial.println("Couldn't locate block again, beginning search...");
+        driveToLocation(100, -100);  // backtrack a little
+        distance = scanForBlock(2000); // search for the block again
+        if (distance == -1) return false;
+        continue;
+      }
+      Serial.println("Found the lost block!");
     }
   }
+  brake(motor1, motor2);
+  delay(1000);
+  return true;
 }
 
 
@@ -301,33 +325,46 @@ void setup()
 
 
 void loop(){
-    
+
     switch (robotState) {
 
-      case getMiddleBlock:
-          Serial.println("Getting middle block...");
+      case drivingToMiddleBlock:
+        Serial.println("Driving to middle block...");
+        driveToLocation(2500, 250);  // move to location near middle block
+        robotState = locatingBlock;
+        break;
 
-          driveToLocation(2500, 250);  // move to location near middle block
-          distanceToBlock = scanForBlock(2000);  // determine distance to block and align robot
 
-          if (distanceToBlock > 0){
-             approachBlock(distanceToBlock);  // get into position to pick up block
-             pickUpBlock();  // use grippers to pick up block
-             robotState = getHomeOnLine;  // take the block home
-          }
-          else{
-            ;   // what to do when we don't find block after scanning left and right?
-          }
-          break;
+      case locatingBlock:
+        Serial.println("Locating block...");
+        distanceToBlock = scanForBlock(2000);  // determine distance to block and align robot
+        if (distanceToBlock > 0){
+           robotState = approachingBlock;
+           delay(1000);
+        }
+        else{
+          Serial.println("No block located. Trying again.");
+          delay(1000);   // what to do when we don't find block after scanning left and right?
+        }
+        break;
 
-      case getHomeOnLine:
-          // Note: can use loop instead of sequential approach
-          Serial.println("Going home along line...");
+    
+      case approachingBlock:
+        Serial.println("Approaching block...");
+        inPosition = approachBlock(distanceToBlock);  // get into position to pick up block
+        if (inPosition) pickUpBlock();  // use grippers to pick up block
+        robotState = gettingHomeOnLine;  // take the block home
+//        what to do if we lose the block? Maybe just go home on line and go for closer block.
 
-          orientateOnLine();  // align robot on the line
-          driveAlongLine(200, 10);  // move along line in the direction of home
-          navigateAroundBlock();  // move around closest block (it is blocking path home)
-          driveAlongLine(200, 10);
+
+      case gettingHomeOnLine:
+        Serial.println("Going home along line...");
+
+        orientateOnLine();  // align robot on the line
+        driveAlongLine(200, 10);  // move along line in the direction of home
+        navigateAroundBlock();  // move around closest block (it is blocking path home)
+        driveAlongLine(200, 10);
+
 
       default:
           break;
