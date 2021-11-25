@@ -9,31 +9,63 @@
 //////////////////////////////////
 
 
-class Gripper {
-
-  private:
-    Servo servo;
-    byte pin;
-    byte initAngle;
-
-  public:
-    Gripper(byte pin, byte initAngle) {
-      this->pin = pin;
-      this->initAngle = initAngle;
-      init();
-    }
-    void init() {
-      servo.attach(pin);
-      open();
-    }
-    void pickUpBlock() {
-      // incomplete
-      ;
-    }
-    void open() {
-      servo.write(initAngle);
-    }
-};
+//class Gripper {
+//
+//  private:
+//    Servo servo;
+//    byte pin;
+//    byte initAngle;
+//
+//public:
+//  Gripper(byte pin, byte initAngle)
+//  {
+//    this->pin = pin;
+//    this->initAngle = initAngle;
+//    init();
+//  }
+//  void init()
+//  {
+//    servo.attach(pin);
+//    open();
+//  }
+//  byte getAngle(byte desiredAngle)
+//  {
+//    byte currentAngle = initAngle;
+//    if (currentAngle < desiredAngle)
+//    {
+//      while (currentAngle <= desiredAngle)
+//      {
+//        servo.write(currentAngle);
+//        currentAngle++;
+//        delay(10);
+//      }
+//    }
+//    else
+//    {
+//      while (currentAngle >= desiredAngle)
+//      {
+//        servo.write(currentAngle);
+//        currentAngle--;
+//        delay(10);
+//      }
+//    }
+//
+//    return currentAngle;
+//  }
+//  void dropBlock()
+//  {
+//    servo.write(initAngle);
+//  }
+//  void open()
+//  {
+//    servo.write(initAngle);
+//  }
+//  void pickUpBlock(byte desiredAngle)
+//  {
+////    byte currentAngle = getAngle(desiredAngle);
+//    servo.write(20);
+//  }
+//};
 
 
 class LineDetector {
@@ -109,9 +141,9 @@ Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 #define rightIR A3
 LineDetector lineDetector(leftIR, rightIR);
 
-byte pin = 5;
-byte initialAngle = 90;
-Gripper gripper(pin, initialAngle);
+//byte pin = 2;
+//byte initialAngle = 80;
+//Gripper gripper(pin, initialAngle);
 
 int triggerPin = 10;
 int echoPin = 11;
@@ -179,6 +211,8 @@ void driveToLocation(long duration, int speed){
     timeElapsed = 0;
 
     while (timeElapsed < duration){
+      motor1.drive(speed);
+      motor2.drive(speed + 2.5);
      forward(motor1, motor2, speed);
       timeElapsed = millis() - time;
     }
@@ -197,10 +231,18 @@ double _scanForBlockInDirection(long duration, int direction){
     timeElapsed = 0;
 
     while (timeElapsed < duration){
-       left(motor1, motor2, direction*200);
+      if (direction == 1) left(motor1, motor2, 175);
+      else right(motor1, motor2, 200);
+       
+       delay(200);
+       brake(motor1, motor2);
+       delay(200);
         distance = getMedianDistance();
 
-        if (distance < 15 && distance > 0){
+        if (distance < 30 && distance > 0){
+          if (direction == 1) left(motor1, motor2, 175);
+          else right(motor1, motor2, 200);
+          delay(200);
           brake(motor1, motor2);
           Serial.println("Detected object at distance:");
           Serial.println(distance);
@@ -240,7 +282,7 @@ double scanForBlock(long duration){
 
 bool approachBlock(double originalDistance){
 
-  int speed = 50;
+  int speed = 110;
   int distForGrippers = 3;
   double distance = originalDistance;
   int retries = 3;
@@ -248,12 +290,15 @@ bool approachBlock(double originalDistance){
   Serial.println("Approaching block...");
   while (distance > distForGrippers){
     
-    forward(motor1, motor2, speed);
+//    forward(motor1, motor2, speed);
+    motor1.drive(speed);
+    motor2.drive(speed - 10);
+//    brake(motor1, motor2);
     distance = getMedianDistance();
     
     Serial.println("Distance to block...");
     Serial.println(distance);
-    delay(1000);
+//    delay(1000);
 
     if (distance > originalDistance + 10 || distance == -1){
       Serial.println("We've lost the block!!!");
@@ -267,7 +312,7 @@ bool approachBlock(double originalDistance){
       }
       if (distance > originalDistance + 10 || distance == -1){
         Serial.println("Couldn't locate block again, beginning search...");
-        driveToLocation(100, -100);  // backtrack a little
+        driveToLocation(200, -150);  // backtrack a little
         distance = scanForBlock(2000); // search for the block again
         if (distance == -1) return false;
         continue;
@@ -276,14 +321,11 @@ bool approachBlock(double originalDistance){
     }
   }
   brake(motor1, motor2);
-  delay(1000);
+//  delay(1000);
   return true;
 }
 
 
-void pickUpBlock(){
-  ;
-}
 
 void orientateOnLine(){
   ;
@@ -313,6 +355,12 @@ bool isObstacle(){
 }
 
 
+Servo servo;
+void pickUpBlock(){
+  servo.write(80);
+}
+
+
 //////////
 // MAIN //
 //////////
@@ -321,6 +369,8 @@ bool isObstacle(){
 void setup()
 {
   Serial.begin(9600);
+  servo.attach(2);
+  servo.write(20);
 }
 
 
@@ -353,6 +403,7 @@ void loop(){
         Serial.println("Approaching block...");
         inPosition = approachBlock(distanceToBlock);  // get into position to pick up block
         if (inPosition) pickUpBlock();  // use grippers to pick up block
+        delay(10000);
         robotState = gettingHomeOnLine;  // take the block home
 //        what to do if we lose the block? Maybe just go home on line and go for closer block.
 
