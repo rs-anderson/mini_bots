@@ -30,6 +30,7 @@ public:
   }
   byte getAngle(byte desiredAngle)
   {
+    byte currentAngle = initAngle;
     if (currentAngle < desiredAngle)
     {
       while (currentAngle <= desiredAngle)
@@ -124,9 +125,10 @@ private:
   int16_t temperature;
   int16_t x;
   int16_t y;
-  int16_t loc[]
+  int16_t loc[];
 
-      public : Location(int16_t x, int16_t y)
+public:
+  Location(int16_t x, int16_t y)
   {
     this->x = x;
     this->y = y;
@@ -197,8 +199,8 @@ private:
   int echoPin = 7;
   UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin);
 
-  init_t x = 0;
-  init_t y = 0;
+  int16_t x = 0;
+  int16_t y = 0;
   Location location(x, y);
 
   long time;
@@ -231,7 +233,7 @@ private:
 
   byte pin = 5;
   byte initialAngle = 90;
-  Gripper gripper(pin, initialAngle);
+  Gripper gripper(byte pin, byte initialAngle);
 
   int triggerPin = 10;
   int echoPin = 11;
@@ -484,7 +486,7 @@ private:
 
       void pickUpBlock(byte desiredAngle)
       {
-        byte currentAngle = Gripper.getAngle(desiredAngle);
+        byte currentAngle = gripper.getAngle(desiredAngle);
         Gripper(pin, currentAngle);
       }
 
