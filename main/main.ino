@@ -137,9 +137,9 @@ const int offsetB = 1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 
-#define leftIR A2
-#define rightIR A3
-LineDetector lineDetector(leftIR, rightIR);
+#define leftIR A0
+#define rightIR A1
+//LineDetector lineDetector(leftIR, rightIR);
 
 //byte pin = 2;
 //byte initialAngle = 80;
@@ -156,8 +156,8 @@ bool inPosition;
 
 
 // the different block-retrieval states we could be in
-enum {drivingToMiddleBlock, locatingBlock, approachingBlock, gettingHomeOnLine, getClosestBlock, goToEnemyBase};
-unsigned char robotState = drivingToMiddleBlock; 
+enum {drivingToMiddleBlock, locatingBlock, approachingBlock, orientOnLine, findLine, driveOnLine, getClosestBlock, goToEnemyBase};
+unsigned char robotState = findLine; 
 
 
 ////////////////////////
@@ -283,7 +283,7 @@ double scanForBlock(long duration){
 bool approachBlock(double originalDistance){
 
   int speed = 110;
-  int distForGrippers = 3;
+  int distForGrippers = 6;
   double distance = originalDistance;
   int retries = 3;
   
@@ -327,19 +327,65 @@ bool approachBlock(double originalDistance){
 
 
 
+void reverseToLine(){
+  int lineState = getState();
+  while (lineState == 3){
+  forward(motor1, motor2, -110);
+  lineState = getState();
+//      Serial.println(lineState);
+  }
+  brake(motor1, motor2);
+  delay(1000);
+  forward(motor1, motor2, -110);
+  delay(200);
+  brake(motor1, motor2);
+  delay(1000);
+//  forward(motor1, motor2, -110);
+//  delay(500);
+//  brake(motor1, motor2);
+}
+
 void orientateOnLine(){
-  ;
+  int lineState = getState();
+  motor2.drive(100);
+  motor1.drive(-100);
+  delay(200);
+  while (lineState != 0 && lineState != 1){
+    motor2.drive(100);
+    motor1.drive(-100);
+//    left(motor1, motor2, 150);
+    lineState = getState();
+  }
+  brake(motor1, motor2);
+  delay(1000);
 }
 
 
-void driveAlongLine(int speed, int adjustmentSpeed){
+int driveAlongLine(){
 
-  int lineState = lineDetector.getState();
+  while (true){
+   int lineState = getState();
+  
+  if (lineState == 0){
+    motor1.drive(100);
+    motor2.drive(110);
+  }
+  else if (lineState == 1){
+    motor1.drive(110);
+    motor2.drive(100);
+  }
 
-  forward(motor1, motor2, speed);
+  else if (lineState == 2){
+    motor1.drive(110);
+    motor2.drive(110);
+  }
 
-  if (lineState == 0) left(motor1, motor2, adjustmentSpeed);
-  else if (lineState == 1) right(motor1, motor2, adjustmentSpeed);
+  else if (lineState == 3) {
+    return findLine;
+  }
+  }
+
+  return driveOnLine;
 
 }
 
@@ -357,8 +403,40 @@ bool isObstacle(){
 
 Servo servo;
 void pickUpBlock(){
-  servo.write(80);
+    time = millis();
+    timeElapsed = 0;
+    int servoAngle = 20;
+    while (servoAngle < 91){
+      forward(motor1, motor2, 115);
+      servo.write(servoAngle);
+      delay(300);
+      servoAngle = servoAngle + 10;
+      Serial.println(servoAngle);
+    }
+    brake(motor1, motor2);
+    delay(300);
 }
+
+byte getState(){
+    int leftIRReading = digitalRead(leftIR);
+    int rightIRReading = digitalRead(rightIR);
+    if (leftIRReading == 1 && rightIRReading == 0){
+      Serial.println("Line on right of robot (Left: 1, Right: 0)");
+      return 0;
+    }
+    else if (leftIRReading == 0 && rightIRReading == 1){
+      Serial.println("Line on left of robot (Left: 0, Right: 1)");
+      return 1;
+    }
+    else if (leftIRReading == 0 && rightIRReading == 0){
+      Serial.println("Robot aligned (Left: 0, Right: 0)");
+      return 2;
+    }
+    else if (leftIRReading == 1 && rightIRReading == 1){
+      Serial.println("Back at base (Left: 1, Right: 1)");
+      return 3;
+    }
+  }
 
 
 //////////
@@ -371,6 +449,8 @@ void setup()
   Serial.begin(9600);
   servo.attach(2);
   servo.write(20);
+  pinMode(leftIR, INPUT);
+  pinMode(rightIR, INPUT);
 }
 
 
@@ -403,18 +483,22 @@ void loop(){
         Serial.println("Approaching block...");
         inPosition = approachBlock(distanceToBlock);  // get into position to pick up block
         if (inPosition) pickUpBlock();  // use grippers to pick up block
-        delay(10000);
-        robotState = gettingHomeOnLine;  // take the block home
+        robotState = findLine;  // take the block home
 //        what to do if we lose the block? Maybe just go home on line and go for closer block.
 
-
-      case gettingHomeOnLine:
+      case findLine:
+         reverseToLine();
+         robotState = orientOnLine;
+      
+      case orientOnLine:
         Serial.println("Going home along line...");
-
         orientateOnLine();  // align robot on the line
-        driveAlongLine(200, 10);  // move along line in the direction of home
-        navigateAroundBlock();  // move around closest block (it is blocking path home)
-        driveAlongLine(200, 10);
+        robotState = driveOnLine;
+
+      case driveOnLine:
+          robotState = driveAlongLine();  // move along line in the direction of home
+//        navigateAroundBlock();  // move around closest block (it is blocking path home)
+//        driveAlongLine(200, 10);
 
 
       default:
