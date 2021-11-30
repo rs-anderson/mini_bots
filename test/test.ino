@@ -482,23 +482,23 @@ int driveAlongLine()
         if (lineState == 1)
         {   
             brake(motor1, motor2);
+            motor2.drive(200);
+            motor1.drive(0);
             if (isPerpLine(lineState)){
                 brake(motor1, motor2);
                 delay(4000);
             }
-            motor2.drive(200);
-            motor1.drive(0);
             lineState = getState();
         }
         else if (lineState == 0)
         {
             brake(motor1, motor2);
+            motor2.drive(0);
+            motor1.drive(200);
             if (isPerpLine(lineState)){
                 brake(motor1, motor2);
                 delay(4000);
             }
-            motor2.drive(0);
-            motor1.drive(200);
             lineState = getState();
         }
         else if (lineState == 2)
