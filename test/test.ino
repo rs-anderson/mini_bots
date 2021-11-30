@@ -473,33 +473,50 @@ void reverseToLine()
 int driveAlongLine()
 {
     int lineState = getState();
+    int colorState = getColor();
     Serial.println(lineState);
+    Serial.println(colorState);
     while (lineState == 3)
     {
         motor1.drive(120);
         motor2.drive(120);
         lineState = getState();
+        colorState = getColor();
+        if (ishomebase(colorState)){
+                brake(motor1, motor2);
+                delay(4000);
+            }
         if (lineState == 1)
         {   
             brake(motor1, motor2);
             motor2.drive(200);
             motor1.drive(0);
-            if (isPerpLine(lineState)){
-                brake(motor1, motor2);
-                delay(4000);
-            }
-            lineState = getState();
+//            if (isPerpLine(lineState)){
+//                brake(motor1, motor2);
+//                delay(4000);
+//            }
+//            if (ishomebase(colorState)){
+//                brake(motor1, motor2);
+//                delay(4000);
+//            }
+//            lineState = getState();
+//            colorState = getColor();
         }
         else if (lineState == 0)
         {
             brake(motor1, motor2);
             motor2.drive(0);
             motor1.drive(200);
-            if (isPerpLine(lineState)){
-                brake(motor1, motor2);
-                delay(4000);
-            }
-            lineState = getState();
+//            if (isPerpLine(lineState)){
+//                brake(motor1, motor2);
+//                delay(4000);
+//            }
+//            if (ishomebase(colorState)){
+//                brake(motor1, motor2);
+//                delay(4000);
+//            }
+//            lineState = getState();
+//            colorState = getColor();
         }
         else if (lineState == 2)
         {
@@ -586,21 +603,39 @@ bool isPerpLine(byte lineState){
   return false;
 }
 
-byte BlackOrWhite()
+byte getColor()
 {
     uint16_t r, g, b, c, colorTemp, lux;
 
     tcs.getRawData(&r, &g, &b, &c);
     colorTemp = tcs.calculateColorTemperature(r, g, b);
     lux = tcs.calculateLux(r, g, b);
-    if (lux < 4)
+    if (lux > 6)
     {
-        ;
+        Serial.println("white tape");
+        return 0;
     }
-    else
+    else if (lux > 1 && lux <= 4)
     {
-        ;
+        Serial.println("blue tape");
+        return 1;
     }
+    else if (lux < 2)
+    {
+        Serial.println("black tape");
+        return 2;
+    }
+
+}
+
+bool ishomebase(byte colorState)
+{
+
+    if (colorState == 1 )
+    {
+        return true;
+    }
+    return false;
 }
 
 //////////
