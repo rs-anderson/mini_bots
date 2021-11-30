@@ -480,8 +480,12 @@ int driveAlongLine()
         motor2.drive(120);
         lineState = getState();
         if (lineState == 1)
-        {
+        {   
             brake(motor1, motor2);
+            if (isPerpLine(lineState)){
+                brake(motor1, motor2);
+                delay(4000);
+            }
             motor2.drive(200);
             motor1.drive(0);
             lineState = getState();
@@ -489,6 +493,10 @@ int driveAlongLine()
         else if (lineState == 0)
         {
             brake(motor1, motor2);
+            if (isPerpLine(lineState)){
+                brake(motor1, motor2);
+                delay(4000);
+            }
             motor2.drive(0);
             motor1.drive(200);
             lineState = getState();
@@ -496,7 +504,7 @@ int driveAlongLine()
         else if (lineState == 2)
         {
             brake(motor1, motor2);
-            delay(2000);
+            delay(4000);
             motor2.drive(-200);
             motor1.drive(-200);
             delay(1000);
@@ -560,6 +568,22 @@ byte getState()
         Serial.println("Back at base (Left: 1, Right: 1)");
         return 3;
     }
+}
+
+bool isPerpLine(byte lineState){
+  byte IR;
+  int IRReading;
+
+  if (lineState == 0) IR = leftIR;
+  else if (lineState == 1) IR = rightIR;
+
+  for (byte i = 0; i < 10; i++) {
+    IRReading = digitalRead(IR);
+    if (IRReading == 0){
+      return true;
+    }
+  }
+  return false;
 }
 
 byte BlackOrWhite()
