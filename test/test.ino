@@ -577,7 +577,7 @@ bool isPerpLine(byte lineState){
   if (lineState == 0) IR = leftIR;
   else if (lineState == 1) IR = rightIR;
 
-  for (byte i = 0; i < 10; i++) {
+  for (byte i = 0; i < 100; i++) {
     IRReading = digitalRead(IR);
     if (IRReading == 0){
       return true;
