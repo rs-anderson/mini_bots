@@ -170,6 +170,7 @@ enum
     orientOnLine,
     findLine,
     driveOnLine,
+    StealBlock,
     getClosestBlock,
     goToEnemyBase
 };
@@ -482,41 +483,43 @@ int driveAlongLine()
         motor2.drive(120);
         lineState = getState();
         colorState = getColor();
-        if (ishomebase(colorState)){
-                brake(motor1, motor2);
-                delay(4000);
-            }
+        if (ishomebase(colorState))
+        {
+            brake(motor1, motor2);
+            delay(2000);
+            robotState = StealBlock;
+        }
         if (lineState == 1)
-        {   
+        {
             brake(motor1, motor2);
             motor2.drive(200);
             motor1.drive(0);
-//            if (isPerpLine(lineState)){
-//                brake(motor1, motor2);
-//                delay(4000);
-//            }
-//            if (ishomebase(colorState)){
-//                brake(motor1, motor2);
-//                delay(4000);
-//            }
-//            lineState = getState();
-//            colorState = getColor();
+            //            if (isPerpLine(lineState)){
+            //                brake(motor1, motor2);
+            //                delay(4000);
+            //            }
+            //            if (ishomebase(colorState)){
+            //                brake(motor1, motor2);
+            //                delay(4000);
+            //            }
+            //            lineState = getState();
+            //            colorState = getColor();
         }
         else if (lineState == 0)
         {
             brake(motor1, motor2);
             motor2.drive(0);
             motor1.drive(200);
-//            if (isPerpLine(lineState)){
-//                brake(motor1, motor2);
-//                delay(4000);
-//            }
-//            if (ishomebase(colorState)){
-//                brake(motor1, motor2);
-//                delay(4000);
-//            }
-//            lineState = getState();
-//            colorState = getColor();
+            //            if (isPerpLine(lineState)){
+            //                brake(motor1, motor2);
+            //                delay(4000);
+            //            }
+            //            if (ishomebase(colorState)){
+            //                brake(motor1, motor2);
+            //                delay(4000);
+            //            }
+            //            lineState = getState();
+            //            colorState = getColor();
         }
         else if (lineState == 2)
         {
@@ -528,6 +531,82 @@ int driveAlongLine()
         }
     }
     return driveOnLine;
+}
+
+void Attack()
+{
+    Servo servo;
+    int lineState = getState();
+    int colorState = getColor();
+    Serial.println(lineState);
+    Serial.println(colorState);
+    while (lineState == 3)
+    {
+        motor1.drive(120);
+        motor2.drive(120);
+        lineState = getState();
+        colorState = getColor();
+        if (ishomebase(colorState))
+        {
+            brake(motor1, motor2);
+            delay(2000);
+            Steal();
+        }
+        if (isObstacle)
+        {
+            motor1.drive(100);
+            motor2.drive(100);
+            delay(1500);
+            servo.write(80);
+            turnAround();
+            driveAlongLine();
+        }
+
+        if (lineState == 1)
+        {
+            brake(motor1, motor2);
+            motor2.drive(200);
+            motor1.drive(0);
+        }
+        else if (lineState == 0)
+        {
+            brake(motor1, motor2);
+            motor2.drive(0);
+            motor1.drive(200);
+        }
+        else if (lineState == 2)
+        {
+            brake(motor1, motor2);
+            delay(4000);
+            motor2.drive(-200);
+            motor1.drive(-200);
+            delay(1000);
+        }
+    }
+}
+
+void Steal()
+{
+    distanceToBlock = scanForBlock(2000); // determine distance to block and align robot
+    if (distanceToBlock > 0)
+    {
+        motor2.drive(100);
+        motor1.drive(100);
+        delay(1500);
+        pickUpBlock();
+        turnAround();
+        motor2.drive(100);
+        motor1.drive(100);
+        delay(1500);
+        robotState = driveOnLine;
+    }
+}
+
+void turnAround()
+{
+    motor2.drive(100);
+    motor1.drive(-100);
+    delay(1500);
 }
 
 void navigateAroundBlock()
@@ -587,20 +666,25 @@ byte getState()
     }
 }
 
-bool isPerpLine(byte lineState){
-  byte IR;
-  int IRReading;
+bool isPerpLine(byte lineState)
+{
+    byte IR;
+    int IRReading;
 
-  if (lineState == 0) IR = leftIR;
-  else if (lineState == 1) IR = rightIR;
+    if (lineState == 0)
+        IR = leftIR;
+    else if (lineState == 1)
+        IR = rightIR;
 
-  for (byte i = 0; i < 100; i++) {
-    IRReading = digitalRead(IR);
-    if (IRReading == 0){
-      return true;
+    for (byte i = 0; i < 100; i++)
+    {
+        IRReading = digitalRead(IR);
+        if (IRReading == 0)
+        {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 byte getColor()
@@ -625,13 +709,12 @@ byte getColor()
         Serial.println("black tape");
         return 2;
     }
-
 }
 
 bool ishomebase(byte colorState)
 {
 
-    if (colorState == 1 )
+    if (colorState == 1)
     {
         return true;
     }
@@ -696,9 +779,12 @@ void loop()
         //        robotState = driveOnLine;
 
     case driveOnLine:
-        robotState = driveAlongLine(); // move along line in the direction of home
-        servo.write(0);                //        navigateAroundBlock();  // move around closest block (it is blocking path home)
-                                       //        driveAlongLine(200, 10);
+        driveAlongLine(); // move along line in the direction of home
+        servo.write(0);   //        navigateAroundBlock();  // move around closest block (it is blocking path home)
+
+    case StealBlock:
+        turnAround();
+        Attack();
 
     default:
         break;
